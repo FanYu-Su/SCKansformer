@@ -1,30 +1,31 @@
-# from .alexnet import alexnet
-# from .vggnet import vgg11, vgg13, vgg16, vgg19
-# from .zfnet import zfnet
-# from .googlenet_v1 import googlenet
-# from .xception import xception
-# from .resnet import  resnet34, resnet50, resnet101, resnext50_32x4d, resnext101_32x8d
-# from .densenet import densenet121, densenet161, densenet169, densenet201
-# from .dla import dla34
-# from .mobilenet_v3 import mobilenet_v3_small, mobilenet_v3_large
-# from .shufflenet_v2 import shufflenet_v2_x0_5, shufflenet_v2_x1_0
-# from .efficientnet_v2 import efficientnetv2_l, efficientnetv2_m, efficientnetv2_s
-# from .convnext import convnext_tiny, convnext_small, convnext_base, convnext_large, convnext_xlarge
+from .alexnet import alexnet
+from .vggnet import vgg11, vgg13, vgg16, vgg19
+from .zfnet import zfnet
+from .googlenet_v1 import googlenet
+from .xception import xception
+from .resnet import resnet34, resnet50, resnet101, resnext50_32x4d, resnext101_32x8d
+from .densenet import densenet121, densenet161, densenet169, densenet201
+from .dla import dla34
+from .mobilenet_v3 import mobilenet_v3_small, mobilenet_v3_large
+from .shufflenet_v2 import shufflenet_v2_x0_5, shufflenet_v2_x1_0
+from .efficientnet_v2 import efficientnetv2_l, efficientnetv2_m, efficientnetv2_s
+from .convnext import convnext_tiny, convnext_small, convnext_base, convnext_large, convnext_xlarge
 from .vision_kansformer import kit_base_patch16_224, kit_base_patch16_224_in21k, kit_base_patch16_224_S, kit_base_patch16_224_G, kit_base_patch16_224_K, kit_base_patch16_224_SS, kit_base_patch16_224_SC, kit_base_patch16_224_SG, kit_base_patch16_224_MSA
-# from .vision_transformer import vit_base_patch16_224, vit_base_patch32_224, vit_large_patch16_224, vit_base_patch16_224_in21k
-# from .swin_transformer import swin_tiny_patch4_window7_224, swin_small_patch4_window7_224, swin_base_patch4_window7_224
+from .vision_transformer import vit_base_patch16_224, vit_base_patch32_224, vit_large_patch16_224, vit_base_patch16_224_in21k
+from .swin_transformer import swin_tiny_patch4_window7_224, swin_small_patch4_window7_224, swin_base_patch4_window7_224
+from .WCBsNet import WBCsNet
 cfgs = {
     # 'alexnet': alexnet,
     # 'zfnet': zfnet,
-    # 'vgg': vgg16,
+    'vgg': vgg16,
     # 'vgg_tiny': vgg11,
     # 'vgg_small': vgg13,
-    # 'vgg_big': vgg19,
+    'vgg_big': vgg19,
     # 'googlenet': googlenet,
     # 'xception': xception,
     # 'resnet_small': resnet34,
-    # 'resnet': resnet50,
-    # 'resnet_big': resnet101,
+    'resnet': resnet50,
+    'resnet_big': resnet101,
     # 'resnext': resnext50_32x4d,
     # 'resnext_big': resnext101_32x8d,
     # 'densenet_tiny': densenet121,
@@ -37,7 +38,7 @@ cfgs = {
     # 'shufflenet_small': shufflenet_v2_x0_5,
     # 'shufflenet': shufflenet_v2_x1_0,
     # 'efficient_v2_small': efficientnetv2_s,
-    # 'efficient_v2': efficientnetv2_m,
+    'efficient_v2': efficientnetv2_m,
     # 'efficient_v2_large': efficientnetv2_l,
     # 'convnext_tiny': convnext_tiny,
     # 'convnext_small': convnext_small,
@@ -54,12 +55,13 @@ cfgs = {
     'kansformer_sg': kit_base_patch16_224_SG,
     'kansformer_msa': kit_base_patch16_224_MSA,
     # 'vision_transformer_small': vit_base_patch32_224,
-    # 'vision_transformer1': vit_base_patch16_224,
+    'vision_transformer1': vit_base_patch16_224,
     # 'vision_transformer2': vit_base_patch16_224_in21k,
     # 'vision_transformer_big': vit_large_patch16_224,
     # 'swin_transformer_tiny': swin_tiny_patch4_window7_224,
     # 'swin_transformer_small': swin_small_patch4_window7_224,
-    # 'swin_transformer': swin_base_patch4_window7_224
+    # 'swin_transformer': swin_base_patch4_window7_224,
+    'WCBsNet': WBCsNet
 }
 
 
