@@ -80,9 +80,10 @@ Details of our BMCD-FGCD dataset:
    - kansformer_msa: 代表只使用了Global-Local Attention模块中的Global模块（既MSA模块）+Kansformer模块
 - 15.如果想要使用消融实验的模型进行训练的话，可以将--model_name后面的参数进行替换即可，例如：--model_name kansformer_sg代表使用丢弃了GLAE和SCConv模块的模型进行训练
 - 16.由于官方代码并没有给出明确的参数，复现出来的结果并不理想，所以我这里仅是完善一下缺失的代码，并没有完全复现出官方论文中的结果，所以经过修改的代码也是仅供参考。
+- 17.代码里面我做了WBCSNET的框架，但是搭出来有问题，所以不纳入考虑范围，download里面可以下载预训练的模型，请尽量使用imagenet1k的数据预训练的结果，请针对需要复现的情况进行处理
 
 ## 2.开始训练
-- 直接通过python train.py --tensorboard --num_classes 32 --epochs 100 --data_path data/BM_data --device cuda:1 --seed --save_path time3tensor  --batch_size 32  可以开始训练（以上是我训练的一个例子，参数可以自行依照实际进行调整）
+- 直接通过python train.py --tensorboard --num_classes 32 --epochs 100 --data_path data/BM_data --device cuda:1 --seed --save_path time3tensor  --batch_size 64  可以开始训练（以上是我训练的一个例子，参数可以自行依照实际进行调整）
 
 ## 3.测试
 - 建议训练完成后，最后使用notebook里面的testing.ipynb进行测试，可以直接得到confusion_matrix的可视化结果，后续也会添加每个图的热力图显示。
