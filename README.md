@@ -80,15 +80,36 @@ Details of our BMCD-FGCD dataset:
    - kansformer_msa: 代表只使用了Global-Local Attention模块中的Global模块（既MSA模块）+Kansformer模块
 - 15.如果想要使用消融实验的模型进行训练的话，可以将--model_name后面的参数进行替换即可，例如：--model_name kansformer_sg代表使用丢弃了GLAE和SCConv模块的模型进行训练
 - 16.由于官方代码并没有给出明确的参数，复现出来的结果并不理想，所以我这里仅是完善一下缺失的代码，并没有完全复现出官方论文中的结果，所以经过修改的代码也是仅供参考。
+<<<<<<< HEAD
 - 17.代码里面我做了WBCSNET的框架，但是搭出来有问题，所以不纳入考虑范围，download里面可以下载预训练的模型，请尽量使用imagenet1k的数据预训练的结果，请针对需要复现的情况进行处理
+=======
+- 17.特别的，我在代码里补全了原来就配置过的其他已开源模型的代码，包括VGG和VIT和ResNet等模型，方便大家进行对比实验，其中WCBsNet由于官方代码缺失，我只针对论文中具有的框架，简单搭建了一个卷积架构，但是和官方的WCBsNet有很明显的不同，仅供参考。
+>>>>>>> 3f0a167 (更新了一下下载预训练模型的代码)
 
 ## 2.开始训练
 - 直接通过python train.py --tensorboard --num_classes 32 --epochs 100 --data_path data/BM_data --device cuda:1 --seed --save_path time3tensor  --batch_size 64  可以开始训练（以上是我训练的一个例子，参数可以自行依照实际进行调整）
 
 ## 3.测试
 - 建议训练完成后，最后使用notebook里面的testing.ipynb进行测试，可以直接得到confusion_matrix的可视化结果，后续也会添加每个图的热力图显示。
-- data_name_dic = ['Haemocytoblast', 'Myeloblast', 'Promyelocyte', 'Neutrophilic myelocyte', 'Neutrophilic metamyelocyte', 'Neutrophilic granulocyte band form', 'Neutrophilic granulocyte segmented form', 'Acidophil in young', 'Acidophil late young', 'Acidophillic rod-shaped nucleus', 'Eosinophillic phloem granulocyte', 'Basophillic in young', 'Basophillic late young', 'Basophillic rod-shaped nucleus',
-                 'Basophllic lobule nucleus', 'Pronormoblast', 'Prorubricyte', 'Polychromatic erythroblast', 'Metarubricyte', 'Prolymphocyte', 'Mature lymphocyte', 'Hetertypic lymphocyte', 'Primitive monocyte', 'Promonocyte', 'Mature monocyte', 'Plasmablast', 'infantile plasmocyte', 'Matrue plasmocyte', 'Bistiocyte', 'Juvenile cell', 'Granulocyte megakaryocyte', 'Naked megakaryocyte']
+- data_name_dic = ['Haemocytoblast', 'Myeloblast', 'Promyelocyte', 'Neutrophilic myelocyte', 'Neutrophilic metamyelocyte', 'Neutrophilic granulocyte band form', 'Neutrophilic granulocyte segmented form', 'Acidophil in young', 'Acidophil late young', 'Acidophillic rod-shaped nucleus', 'Eosinophillic phloem granulocyte', 'Basophillic in young', 'Basophillic late young', 'Basophillic rod-shaped nucleus', 'Basophllic lobule nucleus', 'Pronormoblast', 'Prorubricyte', 'Polychromatic erythroblast', 'Metarubricyte', 'Prolymphocyte', 'Mature lymphocyte', 'Hetertypic lymphocyte', 'Primitive monocyte', 'Promonocyte', 'Mature monocyte', 'Plasmablast', 'infantile plasmocyte', 'Matrue plasmocyte', 'Bistiocyte', 'Juvenile cell', 'Granulocyte megakaryocyte', 'Naked megakaryocyte']
+- 特别的，我们内置同论文中相同的模型的名字如下表：
+    'vgg': vgg16,
+    'vgg_big': vgg19,
+    'resnet': resnet50,
+    'resnet_big': resnet101,
+    'efficient_v2': efficientnetv2_m,
+    'kansformer1': kit_base_patch16_224,
+    'kansformer2': kit_base_patch16_224_in21k,
+    'kansformer_s': kit_base_patch16_224_S,
+    'kansformer_g': kit_base_patch16_224_G,
+    'kansformer_k': kit_base_patch16_224_K,
+    'kansformer_ss': kit_base_patch16_224_SS,
+    'kansformer_sc': kit_base_patch16_224_SC,
+    'kansformer_sg': kit_base_patch16_224_SG,
+    'kansformer_msa': kit_base_patch16_224_MSA,
+    'vision_transformer1': vit_base_patch16_224,
+    'WCBsNet': WBCsNet
+
 
 ## 4.写在最后
 - 请注意：以上代码仅供学习参考之用，请勿用于商业用途，如有侵权请联系删除，谢谢！

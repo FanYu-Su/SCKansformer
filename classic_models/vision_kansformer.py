@@ -1016,6 +1016,181 @@ class VisionTransformer_ablation(nn.Module):
         return x
 
 
+class Block_grid(nn.Module):
+    def __init__(self,
+                 dim,
+                 num_heads,
+                 mlp_ratio=4.,
+                 qkv_bias=False,
+                 qk_scale=None,
+                 drop_ratio=0.,
+                 attn_drop_ratio=0.,
+                 drop_path_ratio=0.,
+                 act_layer=nn.GELU,
+                 norm_layer=nn.LayerNorm,
+                 update_grid=False,
+                 grid_size=5,
+                 spline_order=3):
+        super().__init__()
+        self.update_grid = update_grid
+        self.grid_size = grid_size
+        self.spline_order = spline_order
+        # 初始化第一个规范化层和注意力机制
+        self.norm1 = norm_layer(dim)
+        self.attn = Attention(dim, num_heads=num_heads, qkv_bias=qkv_bias, qk_scale=qk_scale,
+                              attn_drop_ratio=attn_drop_ratio, proj_drop_ratio=drop_ratio)
+        # NOTE: drop path for stochastic depth, we shall see if this is better than dropout here
+        # 初始化DropPath操作
+        self.drop_path = DropPath(drop_path_ratio) if drop_path_ratio > 0. else nn.Identity()
+        # 初始化第二个规范化层和KAN
+        self.norm2 = norm_layer(dim)
+        self.kan = KAN([dim, 64, dim], grid_size=self.grid_size, spline_order=self.spline_order)
+        # mlp_hidden_dim = int(dim * mlp_ratio)
+        # self.mlp = Mlp(in_features=dim, hidden_features=mlp_hidden_dim, act_layer=act_layer, drop=drop_ratio)
+
+    def forward(self, x):
+        """
+        前向传播函数。
+
+        Args:
+            x: 输入张量。
+
+        Returns:
+            经过Block操作后的张量。
+        """
+        b, t, d = x.shape  # 获取输入张量 x 的批次大小、序列长度和特征维度
+        # 对输入张量进行规范化、注意力机制、DropPath操作
+        x = x + self.drop_path(self.attn(self.norm1(x)))
+        # x = x + self.drop_path(self.mlp(self.norm2(x)))
+        # 对输入张量进行规范化、KAN操作、DropPath操作
+        # 对输入张量进行规范化，然后将其形状重塑为 [b*t, d]，其中 b 为批次大小，t 为序列长度，d 为特征维度
+        # 将重塑后的张量再次重塑为 [b, t, d] 的形状，恢复原始的批次大小、序列长度和特征维度
+        # x = x + self.drop_path(self.kan(self.norm2(x)))
+        x = x + self.drop_path(self.kan(self.norm2(x).reshape(-1,
+                               x.shape[-1])).reshape(b, t, d))
+
+        return x
+
+
+class VisionTransformer_kan(nn.Module):
+    def __init__(self, img_size=224, patch_size=16, in_c=3, num_classes=1000,
+                 embed_dim=768, depth=12, num_heads=12, mlp_ratio=4.0, qkv_bias=True,
+                 qk_scale=None, representation_size=None, distilled=False, drop_ratio=0.,
+                 attn_drop_ratio=0., drop_path_ratio=0., embed_layer=PatchEmbed, norm_layer=None,
+                 act_layer=None, update_grid=False, grid_size=5, spline_order=3):
+
+        super().__init__()
+        # 初始化基本参数和层
+        self.num_classes = num_classes
+        self.num_features = self.embed_dim = embed_dim  # num_features for consistency with other models
+        self.num_tokens = 2 if distilled else 1
+        norm_layer = norm_layer or partial(nn.LayerNorm, eps=1e-6)  # 如果没有提前传入，那就使用默认的LayerNorm
+        act_layer = act_layer or nn.GELU  # 类似RELU但是不同的激活函数，类似一个tanh函数，更平滑
+        # 初始化 patch 嵌入层
+        self.patch_embed = embed_layer(img_size=img_size, patch_size=patch_size, in_c=in_c, embed_dim=embed_dim)
+
+        num_patches = self.patch_embed.num_patches  # 这个num_patches是自己定义的PatchEmbed类中的属性，特别的patch_embed是我们前面在init中传入的参数；
+
+        # 初始化类别标记，后续会拓展开，拓展为 [B, 1, embed_dim]，B是batch size，进一步的迭代的时候就有格子batch的更新了；
+        self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dim))
+        self.dist_token = nn.Parameter(torch.zeros(1, 1, embed_dim)) if distilled else None
+        self.pos_embed = nn.Parameter(torch.zeros(1, num_patches + self.num_tokens, embed_dim))
+        self.pos_drop = nn.Dropout(p=drop_ratio)
+        # 初始化随机深度率
+        dpr = [x.item() for x in torch.linspace(0, drop_path_ratio, depth)]  # 随机深度衰减规则
+        # 初始化 Transformer 块
+        self.blocks = nn.Sequential(*[
+            Block_grid(dim=embed_dim, num_heads=num_heads, mlp_ratio=mlp_ratio, qkv_bias=qkv_bias, qk_scale=qk_scale,
+                       drop_ratio=drop_ratio, attn_drop_ratio=attn_drop_ratio, drop_path_ratio=dpr[i],
+                       norm_layer=norm_layer, act_layer=act_layer, grid_size=grid_size, spline_order=spline_order, update_grid=update_grid)
+            for i in range(depth)
+        ])  # 这里的*代表输入的每一个元素都是blocks
+        self.norm = norm_layer(embed_dim)
+
+        # 初始化表示层
+        if representation_size and not distilled:  # 这里判断是否使用了distilled，如果使用了distilled就不使用representation_size；这个representation本质是一个小型的MLP，用于在分类头之前对特征进行进一步的处理
+            self.has_logits = True  # 标记模型中存在一个pre_logits层，后续forward/load的时候会使用到
+            self.num_features = representation_size  # 确认最终送入分类器的特征维度
+            self.pre_logits = nn.Sequential(OrderedDict([
+                ("fc", nn.Linear(embed_dim, representation_size)),
+                ("act", nn.Tanh())
+            ]))
+        else:
+            self.has_logits = False  # 这里没有标记层，那么num_features=embed_dim
+            self.pre_logits = nn.Identity()
+
+        self.head = KAN([self.num_features, 64, num_classes]) if num_classes > 0 else nn.Identity()
+        self.head_dist = None  # 这里是在实现占用头，方便后续的forward函数中进行统一处理；避免if-else，同上pre_logits的设计思路
+        if distilled:
+            # 假定有distilled，那么就会有一个额外的线性层，将embed_dim映射到num_classes，用于蒸馏分类，也就是student学习teacher的知识；
+            self.head_dist = nn.Linear(self.embed_dim, self.num_classes) if num_classes > 0 else nn.Identity()
+
+        # 权重初始化
+        nn.init.trunc_normal_(self.pos_embed, std=0.02)  # 用截断正态分布初始化位置编码，标准差为0.02
+        if self.dist_token is not None:
+            nn.init.trunc_normal_(self.dist_token, std=0.02)
+
+        nn.init.trunc_normal_(self.cls_token, std=0.02)
+        self.apply(_init_vit_weights)
+        self.cnn_block = BlockWithCNN(dim=embed_dim, num_heads=num_heads, qkv_bias=qkv_bias, qk_scale=qk_scale,
+                                      drop_ratio=drop_ratio, attn_drop_ratio=attn_drop_ratio)
+
+    def forward_features(self, x):
+        x = self.patch_embed(x)
+        cls_token = self.cls_token.expand(x.shape[0], -1, -1)
+        # 将类别标记与特征张量拼接在一起，形状为 [B, num_patches + num_tokens, embed_dim]扩充cls的张量，前面已经定义过了cls_token为全0的张量
+
+        if self.dist_token is None:
+            x = torch.cat((cls_token, x), dim=1)  # [B, 197, 768]，将cls_token和x在第1维度进行拼接
+        else:
+            x = torch.cat((cls_token, self.dist_token.expand(x.shape[0], -1, -1), x), dim=1)
+        x = self.pos_drop(x + self.pos_embed)
+        x = self.cnn_block(x)  # 这里就是前面定义的BlockWithCNN类的实例化对象，进行局部特征提取和全局注意力编码；
+
+        x = self.blocks(x)  # blocks是我们前面定义的Transformer的多个Block（特定的Block类组成的序列，这里就是进行多层Transformer编码器的处理
+        x = self.norm(x)  # 对处理后的特征张量进行规范化归一化，这里是外部传入的norm_layer，这里没有传入默认值，必须要有定义
+        if self.dist_token is None:
+            return self.pre_logits(x[:, 0])
+        else:
+            return x[:, 0], x[:, 1]
+
+    def forward(self, x):
+        """
+        完整的前向传播。
+
+        Args:
+            x (tensor): 输入张量。
+
+        Returns:
+            tensor: 输出张量。
+        """
+        x = self.forward_features(x)  # 提取特征，这里会返回cls和dist，或者只返回一个cls经过MLP的结果
+        if self.head_dist is not None:  # 如果存在蒸馏头部，分别计算主分类器和蒸馏分类器的预测结果
+            x, x_dist = self.head(x[0]), self.head_dist(x[1])
+            if self.training and not torch.jit.is_scripting():  # 判断模型是否处于训练模式且不是在使用TorchScript进行脚本化jit时在编译的时候，会产生的效果；
+                return x, x_dist  # 训练时返回主分类器和蒸馏分类器的预测结果
+            else:
+                return (x + x_dist) / 2  # 推理时返回主分类器和蒸馏分类器预测结果的平均值
+        else:
+            x = self.head(x)  # 否则只使用主分类器预测结果
+        return x
+
+
+def kit_base_patch16_224_kan(num_classes: int = 1000):  # 构建 KiT-Base 模型
+
+    model = VisionTransformer_kan(img_size=224,  # 输入图像的大小，为 224x224
+                                  patch_size=16,  # 感受野大小，即每个patch的大小为16x16
+                                  embed_dim=768,  # 嵌入维度，即 Transformer 模型中每个token的维度
+                                  depth=12,  # Transformer 模型的层数
+                                  num_heads=12,  # 注意力头数，即每个注意力层中多头注意力的头数
+                                  representation_size=None,  # 表示层的大小，用于控制模型输出的维度，如果为 None，则不进行降维处理
+                                  num_classes=num_classes,
+                                  update_grid=True,
+                                  grid_size=8,
+                                  spline_order=3)  # 分类的类别数
+    return model
+
+
 def kit_base_patch16_224_G(num_classes: int = 1000):  # 构建GALE消融实验模型
     model = VisionTransformer_ablation(img_size=224,  # 输入图像的大小，为 224x224
                                        patch_size=16,  # 感受野大小，即每个patch的大小为16x16

@@ -46,7 +46,7 @@ class KANLinear(torch.nn.Module):
             .expand(in_features, -1)
             .contiguous()
         )
-        self.register_buffer("grid", grid)  # 将网格作为缓冲区注册
+        self.register_buffer("grid", grid)  # 将网格作为缓冲区注册到缓冲区，保证会跟着.cuda()/.to(device)移动
 
         self.base_weight = torch.nn.Parameter(torch.Tensor(out_features, in_features))  # 初始化基础权重和分段多项式权重
         self.spline_weight = torch.nn.Parameter(
@@ -83,9 +83,10 @@ class KANLinear(torch.nn.Module):
                     self.grid.T[self.spline_order: -self.spline_order],
                     noise,
                 )
-            )
+            )  # 这里判断缩放系数是否要单独作为一个参数更新，是直接跟着scale_spline走，还是单独更新？
             if self.enable_standalone_scale_spline:  # 如果启用独立的分段多项式缩放，则使用 Kaiming 均匀初始化分段多项式缩放参数
                 # torch.nn.init.constant_(self.spline_scaler, self.scale_spline)
+                # He初始化，通过特殊参数调节，确保样条曲线输出波动幅度再合理范围，这是一个根据输入神经元数量自动调整权重随即范围的神经网络的初始化方式；
                 torch.nn.init.kaiming_uniform_(self.spline_scaler, a=math.sqrt(5) * self.scale_spline)
 
     def b_splines(self, x: torch.Tensor):
@@ -107,12 +108,13 @@ class KANLinear(torch.nn.Module):
         返回:
         torch.Tensor: B-样条基函数张量，形状为 (batch_size, in_features, grid_size + spline_order)。
         """
-        assert x.dim() == 2 and x.size(1) == self.in_features
+        assert x.dim() == 2 and x.size(1) == self.in_features  # 首先判断是否是一个二维矩阵，其次判断他们传入的特征维度是不是和我们定义的一致
 
         grid: torch.Tensor = (  # 形状为 (in_features, grid_size + 2 * spline_order + 1)
             self.grid
         )  # (in_features, grid_size + 2 * spline_order + 1)
         x = x.unsqueeze(-1)
+        # [:,:-1]表示取所有行，除了最后一列的所有列；[:,1:]表示取所有行，除了第一列的所有列。其实就是在求靠左端点和靠右端点；
         bases = ((x >= grid[:, :-1]) & (x < grid[:, 1:])).to(x.dtype)
         for k in range(1, self.spline_order + 1):
             bases = (
@@ -123,7 +125,7 @@ class KANLinear(torch.nn.Module):
                 (grid[:, k + 1:] - x)
                 / (grid[:, k + 1:] - grid[:, 1:(-k)])
                 * bases[:, :, 1:]
-            )
+            )  # 通过判断阶数，来调整不同函数对应的基函数的权重分配大小，来对高阶更好的拟合
 
         assert bases.size() == (
             x.size(0),
@@ -185,7 +187,7 @@ class KANLinear(torch.nn.Module):
             self.spline_scaler.unsqueeze(-1)
             if self.enable_standalone_scale_spline
             else 1.0
-        )
+        )  # 返回真实使用的spline参数
 
     def forward(self, x: torch.Tensor):  # 将输入数据通过模型的各个层，经过线性变换和激活函数处理，最终得到模型的输出结果
         """
@@ -331,6 +333,7 @@ class KAN(torch.nn.Module):  # 封装了一个KAN神经网络模型，可以用�
         self.spline_order = spline_order
 
         self.layers = torch.nn.ModuleList()
+        # zip(layers_hidden, layers_hidden[1:])表示取layers_hidden的每个元素和它后面的一个元素配对
         for in_features, out_features in zip(layers_hidden, layers_hidden[1:]):
             self.layers.append(
                 KANLinear(
@@ -345,7 +348,7 @@ class KAN(torch.nn.Module):  # 封装了一个KAN神经网络模型，可以用�
                     grid_eps=grid_eps,
                     grid_range=grid_range,
                 )
-            )
+            )  # 逐层添加构建KANLinear层
 
     def forward(self, x: torch.Tensor, update_grid=False):  # 调用每个KANLinear层的forward方法，对输入数据进行前向传播计算输出。
         """

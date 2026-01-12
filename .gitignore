@@ -1,0 +1,52 @@
+# =====================
+# Datasets / Data
+# =====================
+*.csv
+*.tsv
+*.json
+*.npy
+*.npz
+*.h5
+*.hdf5
+*.mat
+
+# Images / Videos
+*.jpg
+*.jpeg
+*.png
+*.bmp
+*.tiff
+*.mp4
+*.avi
+
+# =====================
+# Model / Training
+# =====================
+checkpoints/
+weights/
+*.pth
+*.pt
+*.ckpt
+*.onnx
+
+# =====================
+# Logs / Cache
+# =====================
+logs/
+runs/
+wandb/
+tensorboard/
+*.log
+
+# =====================
+# Python cache
+# =====================
+*.pyc
+__pycache__/
+*.pyc
+
+# =====================
+# OS / IDE
+# =====================
+.vscode/
+.DS_Store
