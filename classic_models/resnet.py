@@ -3,18 +3,22 @@ import torch
 
 
 class BasicBlock(nn.Module):
-    expansion = 1
+    expansion = 1  # 这里是ResNet-18/34的BasicBlock, expansion恒为1，对应的ResNet-50/101/152的Bottleneck的expansion恒为4；用于控制每个block最终输出通道宽度的参数
 
-    def __init__(self, in_channel, out_channel, stride=1, downsample=None, **kwargs):
+    def __init__(self, in_channel, out_channel, stride=1, downsample=None, **kwargs):  # **kwargs用来兼容Bottleneck的参数
         super(BasicBlock, self).__init__()
-        self.conv1 = nn.Conv2d(in_channels=in_channel, out_channels=out_channel, kernel_size=3, stride=stride, padding=1, bias=False)
-        self.bn1 = nn.BatchNorm2d(out_channel)
+        # 实现一个3*3的卷积，stride=1，padding为1能够保持尺寸不变，这里的padding的可以理解为在对角线上加了一圈0
+        self.conv1 = nn.Conv2d(in_channels=in_channel, out_channels=out_channel,
+                               kernel_size=3, stride=stride, padding=1, bias=False)
+        self.bn1 = nn.BatchNorm2d(out_channel)  # 稳定分布，防止梯度爆炸/激活值发散；加速收敛；让残差相加“数值安全”
         self.relu = nn.ReLU()
-        self.conv2 = nn.Conv2d(in_channels=out_channel, out_channels=out_channel, kernel_size=3, stride=1, padding=1, bias=False)
+        self.conv2 = nn.Conv2d(in_channels=out_channel, out_channels=out_channel,
+                               kernel_size=3, stride=1, padding=1, bias=False)
         self.bn2 = nn.BatchNorm2d(out_channel)
-        self.downsample = downsample
+        self.downsample = downsample  # _make_layer中会体现，如果通道数不匹配或者步距不为1，则需要对identity进行下采样
 
     def forward(self, x):
+        # ResNet的本质就是残差结构：F(x)+x，根据论文的描述，x经过conv+bn+relu+conv之后再加上x，再经过relu激活函数得到最终输出；其中我们就定义F(x)为conv+bn+relu+conv的操作,如下也可以看到符合我们在ResNet18/34中的使用的最小模块
         identity = x
         if self.downsample is not None:
             identity = self.downsample(x)
@@ -47,13 +51,16 @@ class Bottleneck(nn.Module):
 
         width = int(out_channel * (width_per_group / 64.)) * groups
 
-        self.conv1 = nn.Conv2d(in_channels=in_channel, out_channels=width,  kernel_size=1, stride=1, bias=False)  # squeeze channels
+        self.conv1 = nn.Conv2d(in_channels=in_channel, out_channels=width,
+                               kernel_size=1, stride=1, bias=False)  # squeeze channels
         self.bn1 = nn.BatchNorm2d(width)
         # -----------------------------------------
-        self.conv2 = nn.Conv2d(in_channels=width, out_channels=width, groups=groups, kernel_size=3, stride=stride, bias=False, padding=1)
+        self.conv2 = nn.Conv2d(in_channels=width, out_channels=width, groups=groups,
+                               kernel_size=3, stride=stride, bias=False, padding=1)
         self.bn2 = nn.BatchNorm2d(width)
         # -----------------------------------------
-        self.conv3 = nn.Conv2d(in_channels=width, out_channels=out_channel*self.expansion, kernel_size=1, stride=1, bias=False)  # unsqueeze channels
+        self.conv3 = nn.Conv2d(in_channels=width, out_channels=out_channel*self.expansion,
+                               kernel_size=1, stride=1, bias=False)  # unsqueeze channels
         self.bn3 = nn.BatchNorm2d(out_channel*self.expansion)
         self.relu = nn.ReLU(inplace=True)
         self.downsample = downsample
@@ -90,7 +97,7 @@ class ResNet(nn.Module):
                  groups=1,
                  width_per_group=64):
         super(ResNet, self).__init__()
-        self.include_top = include_top
+        self.include_top = include_top  # 指代最后的全连接层，判断是否保留全连接，如果保留那一般用于分类，如果不保留，那就用于迁移学习、特征提取、其他下游任务等；
         self.in_channel = 64
 
         self.groups = groups
@@ -156,11 +163,11 @@ class ResNet(nn.Module):
 
 # # resnet34  pre-train parameters https://download.pytorch.org/models/resnet34-333f7ec4.pth
 # def resnet_samll(num_classes=1000, include_top=True):
-   
+
 #     return ResNet(BasicBlock, [3, 4, 6, 3], num_classes=num_classes, include_top=include_top)
 
 # # resnet50  pre-train parameters https://download.pytorch.org/models/resnet50-19c8e357.pth
-# def resnet(num_classes=1000, include_top=True): 
+# def resnet(num_classes=1000, include_top=True):
 #     return ResNet(Bottleneck, [3, 4, 6, 3], num_classes=num_classes, include_top=include_top)
 
 # # resnet101 pre-train parameters https://download.pytorch.org/models/resnet101-5d3b4d8f.pth
@@ -168,7 +175,7 @@ class ResNet(nn.Module):
 #     return ResNet(Bottleneck, [3, 4, 23, 3], num_classes=num_classes, include_top=include_top)
 
 # # resneXt pre-train parameters https://download.pytorch.org/models/resnext50_32x4d-7cdf4587.pth
-# def resnext(num_classes=1000, include_top=True): 
+# def resnext(num_classes=1000, include_top=True):
 #     groups = 32
 #     width_per_group = 4
 #     return ResNet(Bottleneck, [3, 4, 6, 3],
@@ -178,7 +185,7 @@ class ResNet(nn.Module):
 #                   width_per_group=width_per_group)
 
 # # resneXt_big pre-train parameters https://download.pytorch.org/models/resnext101_32x8d-8ba56ff5.pth
-# def resnext_big(num_classes=1000, include_top=True): 
+# def resnext_big(num_classes=1000, include_top=True):
 #     groups = 32
 #     width_per_group = 8
 #     return ResNet(Bottleneck, [3, 4, 23, 3],
@@ -186,6 +193,7 @@ class ResNet(nn.Module):
 #                   include_top=include_top,
 #                   groups=groups,
 #                   width_per_group=width_per_group)
+
 
 def resnet34(num_classes=1000, include_top=True):
     # https://download.pytorch.org/models/resnet34-333f7ec4.pth

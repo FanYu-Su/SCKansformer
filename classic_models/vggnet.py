@@ -8,7 +8,8 @@ model_urls = {
     'vgg16': 'https://download.pytorch.org/models/vgg16-397923af.pth',
     'vgg19': 'https://download.pytorch.org/models/vgg19-dcbb9e9d.pth'
 }
- 
+
+
 class VGG(nn.Module):
     def __init__(self, features, num_classes=1000, init_weights=False):
         super(VGG, self).__init__()
@@ -59,31 +60,36 @@ def make_features(cfg: list):
             in_channels = v
     return nn.Sequential(*layers)
 
+
 # vgg_tiny(VGG11), vgg_small(VGG13), vgg(VGG16), vgg_big(VGG19)
 cfgs = {
-    'vgg11': [64, 'M', 128, 'M', 256, 256, 'M', 512, 512, 'M', 512, 512, 'M'],   
+    'vgg11': [64, 'M', 128, 'M', 256, 256, 'M', 512, 512, 'M', 512, 512, 'M'],
     'vgg13': [64, 64, 'M', 128, 128, 'M', 256, 256, 'M', 512, 512, 'M', 512, 512, 'M'],
     'vgg16': [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 'M', 512, 512, 512, 'M', 512, 512, 512, 'M'],
     'vgg19': [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 256, 'M', 512, 512, 512, 512, 'M', 512, 512, 512, 512, 'M'],
 }
 
 
-def vgg11(num_classes): 
+def vgg11(num_classes):
     cfg = cfgs["vgg11"]
+    # 这里会先执行VGG中的make_features函数然后返回一个数据，当作VGG的参数features再传入VGG，进一步的构建了model模型
     model = VGG(make_features(cfg), num_classes=num_classes)
     return model
 
-def vgg13(num_classes):  
+
+def vgg13(num_classes):
     cfg = cfgs["vgg13"]
     model = VGG(make_features(cfg), num_classes=num_classes)
     return model
 
-def vgg16(num_classes):  
+
+def vgg16(num_classes):
     cfg = cfgs["vgg16"]
     model = VGG(make_features(cfg), num_classes=num_classes)
     return model
 
-def vgg19(num_classes):  
+
+def vgg19(num_classes):
     cfg = cfgs['vgg19']
     model = VGG(make_features(cfg), num_classes=num_classes)
     return model
