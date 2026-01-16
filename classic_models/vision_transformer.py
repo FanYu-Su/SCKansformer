@@ -194,7 +194,7 @@ class VisionTransformer(nn.Module):
         super(VisionTransformer, self).__init__()
         self.num_classes = num_classes
         self.num_features = self.embed_dim = embed_dim  # num_features for consistency with other models
-        self.num_tokens = 2 if distilled else 1
+        self.num_tokens = 2 if distilled else 1  # 假如使用distilled那就有两个token，否则只有一个token
         norm_layer = norm_layer or partial(nn.LayerNorm, eps=1e-6)
         act_layer = act_layer or nn.GELU
 

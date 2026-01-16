@@ -31,6 +31,7 @@ class DropPath(nn.Module):
     Drop paths (Stochastic Depth) per sample  (when applied in main path of residual blocks).
     "Deep Networks with Stochastic Depth", https://arxiv.org/pdf/1603.09382.pdf
     """
+
     def __init__(self, drop_prob=None):
         super(DropPath, self).__init__()
         self.drop_prob = drop_prob
@@ -64,7 +65,7 @@ class ConvBNAct(nn.Module):
                               groups=groups,
                               bias=False)
 
-        self.bn = norm_layer(out_planes)
+        self.bn = norm_layer(out_planes)  # 这里的out_planes是卷积层的输出通道数
         self.act = activation_layer()
 
     def forward(self, x):
@@ -81,7 +82,7 @@ class SqueezeExcite(nn.Module):
                  expand_c: int,  # block expand channel
                  se_ratio: float = 0.25):
         super(SqueezeExcite, self).__init__()
-        squeeze_c = int(input_c * se_ratio)
+        squeeze_c = int(input_c * se_ratio)  # 压缩到多少维度
         self.conv_reduce = nn.Conv2d(expand_c, squeeze_c, 1)
         self.act1 = nn.SiLU()  # alias Swish
         self.conv_expand = nn.Conv2d(squeeze_c, expand_c, 1)
@@ -246,6 +247,7 @@ class EfficientNetV2(nn.Module):
         for cnf in model_cnf:
             assert len(cnf) == 8
 
+        # partial 函数将 BatchNorm2d 包装为带有固定参数的版本，即每次都会用 eps=1e-3 和 momentum=0.1 来初始化批归一化层
         norm_layer = partial(nn.BatchNorm2d, eps=1e-3, momentum=0.1)
 
         stem_filter_num = model_cnf[0][4]
@@ -317,7 +319,7 @@ def efficientnetv2_s(num_classes: int = 1000):
     EfficientNetV2
     https://arxiv.org/abs/2104.00298
     """
-    # train_size: 300, eval_size: 384 
+    # train_size: 300, eval_size: 384
     # repeat, kernel, stride, expansion, in_c, out_c, operator, se_ratio
     model_config = [[2, 3, 1, 1, 24, 24, 0, 0],
                     [4, 3, 2, 4, 24, 48, 0, 0],
@@ -337,7 +339,7 @@ def efficientnetv2_m(num_classes: int = 1000):
     EfficientNetV2
     https://arxiv.org/abs/2104.00298
     """
-    # train_size: 384, eval_size: 480 
+    # train_size: 384, eval_size: 480
     # repeat, kernel, stride, expansion, in_c, out_c, operator, se_ratio
     model_config = [[3, 3, 1, 1, 24, 24, 0, 0],
                     [5, 3, 2, 4, 24, 48, 0, 0],
@@ -358,7 +360,7 @@ def efficientnetv2_l(num_classes: int = 1000):
     EfficientNetV2
     https://arxiv.org/abs/2104.00298
     """
-    # train_size: 384, eval_size: 480 
+    # train_size: 384, eval_size: 480
     # repeat, kernel, stride, expansion, in_c, out_c, operator, se_ratio
     model_config = [[4, 3, 1, 1, 32, 32, 0, 0],
                     [7, 3, 2, 4, 32, 64, 0, 0],
