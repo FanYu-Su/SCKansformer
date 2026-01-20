@@ -85,6 +85,7 @@ Details of our BMCD-FGCD dataset:
 =======
 - 17.特别的，我在代码里补全了原来就配置过的其他已开源模型的代码，包括VGG和VIT和ResNet等模型，方便大家进行对比实验，其中WCBsNet由于官方代码缺失，我只针对论文中具有的框架，简单搭建了一个卷积架构，但是和官方的WCBsNet有很明显的不同，仅供参考。
 >>>>>>> 3f0a167 (更新了一下下载预训练模型的代码)
+- 18.目前更新了一下kansformer_kan的训练模型，更新了一下kan的参数调整；目前调用kansformer_kan将会采用8网格5阶的kan网络进行训练；但这将会极大程度的影响训练时间，所以请注意使用；
 
 ## 2.开始训练
 - 直接通过python train.py --tensorboard --num_classes 32 --epochs 100 --data_path data/BM_data --device cuda:1 --seed --save_path time3tensor  --batch_size 64  可以开始训练（以上是我训练的一个例子，参数可以自行依照实际进行调整）

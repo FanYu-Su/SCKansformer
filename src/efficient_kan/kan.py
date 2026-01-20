@@ -161,12 +161,9 @@ class KANLinear(torch.nn.Module):
             0, 1  # 形状为 (in_features, batch_size, grid_size + spline_order)
         )  # (in_features, batch_size, grid_size + spline_order)
         B = y.transpose(0, 1)  # (in_features, batch_size, out_features) # 形状为 (in_features, batch_size, out_features)
-        solution = torch.linalg.lstsq(   # 使用最小二乘法求解线性方程组
-            A, B
-        ).solution  # (in_features, grid_size + spline_order, out_features)  # 形状为 (in_features, grid_size + spline_order, out_features)
-        result = solution.permute(  # 调整结果的维度顺序
-            2, 0, 1
-        )  # (out_features, in_features, grid_size + spline_order)
+        # (in_features, grid_size + spline_order, out_features)  # 形状为 (in_features, grid_size + spline_order, out_features)# 使用最小二乘法求解线性方程组
+        solution = torch.linalg.lstsq(A, B).solution
+        result = solution.permute(2, 0, 1)  # (out_features, in_features, grid_size + spline_order)调整结果的维度顺序
 
         assert result.size() == (
             self.out_features,

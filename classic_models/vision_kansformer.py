@@ -46,7 +46,7 @@ class SRU(nn.Module):
                  ):
         super().__init__()  # 调用父类构造函数
 
-        # 初始化 GroupNorm 层或自定义 GroupBatchnorm2d 层
+        # 初始化 GroupNorm 层或自定义 GroupBatchnorm2d 层,一般时使用自定义的GroupBatchnorm2d，这里面有一个可学习的参数gamma/beta，这是手动设置的要求在迭代过程中学习的参数
         self.gn = nn.GroupNorm(num_channels=oup_channels, num_groups=group_num) if torch_gn else GroupBatchnorm2d(
             c_num=oup_channels, group_num=group_num)  # 特别的这里的group_num是会影响最后训练效果的；过大会抑制通道见信息耦合，导致过拟合；过小导致无法利用局部通道统计特性，导致欠拟合
 
@@ -56,7 +56,8 @@ class SRU(nn.Module):
     def forward(self, x):
         gn_x = self.gn(x)  # 应用分组批量归一化，注意归一化的结果会是一个含偏置的线性变换结果，所以在这里我们后续还会用sigomid进行非线性映射到0-1上；
         w_gamma = self.gn.gamma / sum(self.gn.gamma)  # 计算 gamma 权重可学习的通道缩放因子gamma；然后将他进行归一化到0-1的区间上，得到每个通道的重要性比例；
-        reweights = self.sigomid(gn_x * w_gamma)  # 计算重要性权重
+        # 计算重要性权重，这里的gamma会在不断地训练中迭代，这是因为gamma本身是一个parameter；为什么要用gn_x而不用x？；因为gn_x已经经过归一化和线性变换，能更好地反映每个通道的重要性，也就是放大了通道间的差异性，同时gn_x的输出本来就再一次的叠加了gamma，所以会更进一步的放大特征之间的差异；
+        reweights = self.sigomid(gn_x * w_gamma)
 
         # 门控机制
         info_mask = reweights >= self.gate_treshold  # 计算信息门控掩码
@@ -91,7 +92,7 @@ class CRU(nn.Module):
         # 下层特征转换
         self.PWC2 = nn.Conv2d(low_channel // squeeze_radio, op_channel - low_channel // squeeze_radio, kernel_size=1,
                               bias=False)  # 创建卷积层
-        self.advavg = nn.AdaptiveAvgPool2d(1)  # 创建自适应平均池化层
+        self.advavg = nn.AdaptiveAvgPool2d(1)  # 创建自适应平均池化层，对通道做平均池化，最后每个通道只有一个数据结果；
 
     def forward(self, x):
         # 分割输入特征
@@ -106,6 +107,7 @@ class CRU(nn.Module):
 
         # 特征融合
         out = torch.cat([Y1, Y2], dim=1)
+        # 使用softmax计算每个通道的权重数据大小，进而获得注意力权重，也是通过这个方式提取特征的重要性，进一步的广播扩展点乘每一个out元素
         out = F.softmax(self.advavg(out), dim=1) * out
         out1, out2 = torch.split(out, out.size(1) // 2, dim=1)
         return out1 + out2
@@ -1187,7 +1189,22 @@ def kit_base_patch16_224_kan(num_classes: int = 1000):  # 构建 KiT-Base 模型
                                   num_classes=num_classes,
                                   update_grid=True,
                                   grid_size=8,
-                                  spline_order=3)  # 分类的类别数
+                                  spline_order=5)  # 样条阶数和格子大小
+    return model
+
+
+def kit_base_patch16_224_kan_g8s3(num_classes: int = 1000):  # 构建 KiT-Base 模型
+
+    model = VisionTransformer_kan(img_size=224,  # 输入图像的大小，为 224x224
+                                  patch_size=16,  # 感受野大小，即每个patch的大小为16x16
+                                  embed_dim=768,  # 嵌入维度，即 Transformer 模型中每个token的维度
+                                  depth=12,  # Transformer 模型的层数
+                                  num_heads=12,  # 注意力头数，即每个注意力层中多头注意力的头数
+                                  representation_size=None,  # 表示层的大小，用于控制模型输出的维度，如果为 None，则不进行降维处理
+                                  num_classes=num_classes,
+                                  update_grid=True,
+                                  grid_size=8,
+                                  spline_order=3)  # 样条阶数和格子大小
     return model
 
 

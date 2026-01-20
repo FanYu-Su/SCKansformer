@@ -10,7 +10,7 @@ from .mobilenet_v3 import mobilenet_v3_small, mobilenet_v3_large
 from .shufflenet_v2 import shufflenet_v2_x0_5, shufflenet_v2_x1_0
 from .efficientnet_v2 import efficientnetv2_l, efficientnetv2_m, efficientnetv2_s
 from .convnext import convnext_tiny, convnext_small, convnext_base, convnext_large, convnext_xlarge
-from .vision_kansformer import kit_base_patch16_224, kit_base_patch16_224_in21k, kit_base_patch16_224_S, kit_base_patch16_224_G, kit_base_patch16_224_K, kit_base_patch16_224_SS, kit_base_patch16_224_SC, kit_base_patch16_224_SG, kit_base_patch16_224_MSA, kit_base_patch16_224_kan
+from .vision_kansformer import kit_base_patch16_224, kit_base_patch16_224_in21k, kit_base_patch16_224_S, kit_base_patch16_224_G, kit_base_patch16_224_K, kit_base_patch16_224_SS, kit_base_patch16_224_SC, kit_base_patch16_224_SG, kit_base_patch16_224_MSA, kit_base_patch16_224_kan, kit_base_patch16_224_kan_g8s3
 from .vision_transformer import vit_base_patch16_224, vit_base_patch32_224, vit_large_patch16_224, vit_base_patch16_224_in21k
 from .swin_transformer import swin_tiny_patch4_window7_224, swin_small_patch4_window7_224, swin_base_patch4_window7_224
 from .WCBsNet import WBCsNet
@@ -48,6 +48,7 @@ cfgs = {
     'kansformer1': kit_base_patch16_224,
     'kansformer2': kit_base_patch16_224_in21k,
     'kansformer_kan': kit_base_patch16_224_kan,
+    'kansformer_kan_g8s3': kit_base_patch16_224_kan_g8s3,
     'kansformer_s': kit_base_patch16_224_S,
     'kansformer_g': kit_base_patch16_224_G,
     'kansformer_k': kit_base_patch16_224_K,
