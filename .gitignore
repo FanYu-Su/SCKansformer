@@ -36,6 +36,7 @@ logs/
 runs/
 wandb/
 tensorboard/
+data/
 *.log
 
 # =====================
