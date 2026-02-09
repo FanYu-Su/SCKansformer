@@ -91,7 +91,14 @@ Details of our BMCD-FGCD dataset:
 
 ## 3.测试
 - 建议训练完成后，最后使用notebook里面的testing.ipynb进行测试，可以直接得到confusion_matrix的可视化结果，后续也会添加每个图的热力图显示。
+- 请根据实际需要修改需要显示的分类参数，具体如下：
 - data_name_dic = ['Haemocytoblast', 'Myeloblast', 'Promyelocyte', 'Neutrophilic myelocyte', 'Neutrophilic metamyelocyte', 'Neutrophilic granulocyte band form', 'Neutrophilic granulocyte segmented form', 'Acidophil in young', 'Acidophil late young', 'Acidophillic rod-shaped nucleus', 'Eosinophillic phloem granulocyte', 'Basophillic in young', 'Basophillic late young', 'Basophillic rod-shaped nucleus', 'Basophllic lobule nucleus', 'Pronormoblast', 'Prorubricyte', 'Polychromatic erythroblast', 'Metarubricyte', 'Prolymphocyte', 'Mature lymphocyte', 'Hetertypic lymphocyte', 'Primitive monocyte', 'Promonocyte', 'Mature monocyte', 'Plasmablast', 'infantile plasmocyte', 'Matrue plasmocyte', 'Bistiocyte', 'Juvenile cell', 'Granulocyte megakaryocyte', 'Naked megakaryocyte']
+- target_name_soc = ('2S1', 'BMP2', 'BRDM2', 'BTR60', 'BTR70', 'D7', 'T62', 'T72', 'ZIL131', 'ZSU234')
+- target_name_eoc_1 = ('2S1', 'BRDM2', 'T72', 'ZSU234')
+
+- target_name_eoc_2 = ('BMP2', 'BRDM2', 'BTR70', 'T72')
+- target_name_eoc_2_cv = ('T72-A32', 'T72-A62', 'T72-A63', 'T72-A64', 'T72-S7')
+- target_name_eoc_2_vv = ('BMP2-9566', 'BMP2-C21', 'T72-812', 'T72-A04', 'T72-A05', 'T72-A07', 'T72-A10')
 - 特别的，我们内置同论文中相同的模型的名字如下表：
     'vgg': vgg16,
     'vgg_big': vgg19,

@@ -83,3 +83,53 @@ class Five_Flowers_Load(Dataset):
         return images, labels
     # 当多个img组合成一个batch的时候，loader会自动调用这个函数，来实现组成batch的操作；注意和前面的__getitem__区分开，getitem是dataset的操作，但是loader会取batch，然后按照batch大小进行给数据进而按照batch进行训练;
     # 通常batch会是这样的格式：[dataset[m],dataset[n],dataset[p],...]，这是loader中是这样取到的，进一步的这里再把他还原给list images和labels用来给机器读取和学习；
+
+
+# 以下是新增的定义类别用的代码
+target_name_soc = ('2S1', 'BMP2', 'BRDM2', 'BTR60', 'BTR70', 'D7', 'T62', 'T72', 'ZIL131', 'ZSU234')
+target_name_eoc_1 = ('2S1', 'BRDM2', 'T72', 'ZSU234')
+
+target_name_eoc_2 = ('BMP2', 'BRDM2', 'BTR70', 'T72')
+target_name_eoc_2_cv = ('T72-A32', 'T72-A62', 'T72-A63', 'T72-A64', 'T72-S7')
+target_name_eoc_2_vv = ('BMP2-9566', 'BMP2-C21', 'T72-812', 'T72-A04', 'T72-A05', 'T72-A07', 'T72-A10')
+
+target_name_confuser_rejection = ('BMP2', 'BTR70', 'T72', '2S1', 'ZIL131')
+
+target_name = {
+    'soc': target_name_soc,
+    'eoc-1': target_name_eoc_1,
+    'eoc-1-t72-132': target_name_eoc_1,
+    'eoc-1-t72-a64': target_name_eoc_1,
+    'eoc-2-cv': target_name_eoc_2 + target_name_eoc_2_cv,
+    'eoc-2-vv': target_name_eoc_2 + target_name_eoc_2_vv,
+    'confuser-rejection': target_name_confuser_rejection
+}
+
+serial_number = {
+    'b01': 0,
+
+    '9563': 1,
+    '9566': 1,
+    'c21': 1,
+
+    'E-71': 2,
+    'k10yt7532': 3,
+    'c71': 4,
+    '92v13015': 5,
+    'A51': 6,
+
+    '132': 7,
+    '812': 7,
+    's7': 7,
+    'A04': 7,
+    'A05': 7,
+    'A07': 7,
+    'A10': 7,
+    'A32': 7,
+    'A62': 7,
+    'A63': 7,
+    'A64': 7,
+
+    'E12': 8,
+    'd08': 9
+}
